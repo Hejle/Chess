@@ -63,7 +63,9 @@
         document.getElementById("time").innerHTML = timeLeft + " seconds";
     }
 
-    var ws = new WebSocket('ws://' + window.location.hostname + ':5000', 'echo-protocol');
+    var wa = new WebSocket('ws://' + window.location.hostname + ':3333', 'echo-protocol');
+    var ws;
+
 
     function sendMove(oldLoc, newLoc) {
         var message = JSON.stringify({action: "move", oldLocation: newLoc, newLocation: oldLoc});
@@ -117,17 +119,38 @@
     function requestBoard() {
         ws.send(JSON.stringify({action: "newBoard"}));
     }
+    
+    function setupWs() {
+        ws.onopen = function (event) {
+            //TODO Implement this on the backend
+            requestTime();
+            requestCurrentSide();
+            requestBoard();
+            closeConnectionServer();
+        };
 
-    ws.onopen = function (event) {
-        //TODO Implement this on the backend
-        requestTime();
-        requestCurrentSide();
-        requestBoard();
-    };
+        ws.addEventListener("message", function (e) {
+            handleServerMessage(e);
+        });
+    }
 
-    ws.addEventListener("message", function (e) {
-        handleServerMessage(e);
+    wa.addEventListener("message", function (e) {
+       handleLoginMessage(e);
     });
+
+    function closeConnectionServer() {
+        wa.close();
+    }
+
+    function handleLoginMessage(event) {
+        var message = JSON.parse(event.data);
+        if(message.action === "connection") {
+            wa.send(JSON.stringify({action: "client", game: "chess"}));
+        } else if(message.action === "gameinfo") {
+            ws = new WebSocket('ws://' + message.address + ':' + message.port, 'echo-protocol');
+            setupWs();
+        }
+    }
 
 </script>
 </html>

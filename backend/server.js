@@ -1,5 +1,6 @@
 http = require('http');
-
+var ip = require('ip');
+var WebSocket = require('ws');
 var WebSocketServer = require('websocket').server;
 var clients = [];
 var board = require('./Pieces');
@@ -11,13 +12,16 @@ var clientAlignment = {};
 var blackCount = 0;
 var whiteCount = 0;
 var clientVotes = {};
+var port = 5000;
+
+
 
 board.initialiseBoard();
 
 var server = http.createServer(function (request, response) {
 });
 
-server.listen(5000, function () {
+server.listen(port, function () {
     console.log("I am running!");
 });
 
@@ -241,5 +245,35 @@ function broadcastMove(oldLocation, newLocation) {
         client.sendUTF(JSON.stringify({action: "move", oldLocation: oldLocation, newLocation: newLocation}));
     });
 }
+
+var ws = new WebSocket('ws://' + 'localhost' + ':3333', 'echo-protocol');
+
+
+function isValidMessage(data) {
+    try {
+        JSON.parse(data);
+    } catch (e) {
+        return false;
+    }
+    return true;
+}
+
+function handleServerMessage(event) {
+    var message = JSON.parse(event.data);
+
+    if(message.action === "error") {
+        console.log(message.message);
+    } else if (message.action === "connection") {
+        ws.send(JSON.stringify({action: "hostdetails", type: "Chess", address:ip.address(), port:port}));
+    }
+}
+
+ws.onopen = function (event) {
+    //TODO Implement this on the backend
+};
+
+ws.addEventListener("message", function (e) {
+    handleServerMessage(e);
+});
 
 console.log("Game server running at port 5000\n");
