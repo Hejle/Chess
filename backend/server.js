@@ -247,6 +247,7 @@ function broadcastMove(oldLocation, newLocation) {
 }
 
 var ws = new WebSocket('ws://' + 'localhost' + ':3333', 'echo-protocol');
+var rulebook = new WebSocket('ws://' + 'localhost' + ':4444', 'echo-protocol');
 
 
 function isValidMessage(data) {
@@ -261,10 +262,14 @@ function isValidMessage(data) {
 function handleServerMessage(event) {
     var message = JSON.parse(event.data);
 
-    if(message.action === "error") {
+    if(message.action === "ping") {
+        ws.send(JSON.stringify({action: "pong", id: message.id, time: message.time}));
+    } else if(message.action === "error") {
         console.log(message.message);
     } else if (message.action === "connection") {
         ws.send(JSON.stringify({action: "hostdetails", type: "Chess", address:ip.address(), port:port}));
+    } else if (message.action === "getPlayers") {
+        ws.send(JSON.stringify({action: "updatePlayers", id: message.id, players: blackCount+whiteCount}));
     }
 }
 
