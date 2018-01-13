@@ -247,8 +247,6 @@ function broadcastMove(oldLocation, newLocation) {
 }
 
 var ws = new WebSocket('ws://' + 'localhost' + ':3333', 'echo-protocol');
-var rulebook = new WebSocket('ws://' + 'localhost' + ':4444', 'echo-protocol');
-
 
 function isValidMessage(data) {
     try {
